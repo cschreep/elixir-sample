@@ -35,10 +35,10 @@ defmodule Mmorpg.Player do
       "flipX" => player.flip_x,
       "rotation" => player.rotation,
       "id" => player.id,
-      "left" => player.move_left,
-      "right" => player.move_right,
-      "up" => player.move_up,
-      "down" => player.move_down,
+      "moveLeft" => player.move_left,
+      "moveRight" => player.move_right,
+      "moveUp" => player.move_up,
+      "moveDown" => player.move_down,
     }
   end
 

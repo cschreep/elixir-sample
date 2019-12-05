@@ -13,7 +13,7 @@ defmodule Mmorpg.GameServer do
   end
 
   def current_players(server), do: GenServer.call(server, :current_players)
-  def add_player(server, player_name), do: GenServer.call(server, {:add_player, player_name})
+  def add_player(server, player_name, x, y), do: GenServer.call(server, {:add_player, player_name, x, y})
   def remove_player(server, player_name), do: GenServer.call(server, {:remove_player, player_name})
   def move_player(server, player_name, %{} = player_info), do: GenServer.call(server, {:move_player, player_name, player_info})
   def sync_player(server, player_name, %{} = player_info), do: GenServer.call(server, {:sync_player, player_name, player_info})
@@ -26,8 +26,10 @@ defmodule Mmorpg.GameServer do
     {:reply, {:ok, players}, state}
   end
 
-  def handle_call({:add_player, player_name}, _from, state) do
+  def handle_call({:add_player, player_name, x, y}, _from, state) do
     player = Player.new(player_name)
+    |> Map.put(:x, x)
+    |> Map.put(:y, y)
     state = %{state | players: Map.put(state.players, player_name, player)}
     {:reply, {:ok, Player.to_map(player)}, state}
   end

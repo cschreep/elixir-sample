@@ -8,9 +8,9 @@ defmodule MmorpgWeb.GameChannel do
     {:ok, socket}
   end
 
-  def handle_in("addPlayer", %{"playerId" => player_id}, socket) do
+  def handle_in("addPlayer", %{"playerId" => player_id, "x" => x, "y" => y}, socket) do
     {:ok, current_players} = GameServer.current_players(via(socket.topic))
-    case GameServer.add_player(via(socket.topic), player_id) do
+    case GameServer.add_player(via(socket.topic), player_id, x, y) do
       {:ok, player} ->
         broadcast_from(socket, "newPlayer", player)
         push(socket, "currentPlayers", current_players)
@@ -43,42 +43,6 @@ defmodule MmorpgWeb.GameChannel do
       {:reply, {:error, %{"error" => reason}}, socket}
     :error ->
       {:reply, :error, socket}
-    end
-  end
-
-  def terminate({:shutdown, :left}, socket) do
-    remove_player(socket)
-  end
-
-  def terminate({:shutdown, :closed}, socket) do
-    case player_id = Map.get(socket.assigns, :player_id) do
-      nil -> IO.inspect("Shutting down with empty player")
-      _ ->
-        GameServer.remove_player(via(socket.topic), player_id)
-        broadcast_from(socket, "playerLeft", %{"playerId" => player_id})
-      end
-    socket
-  end
-
-  def terminate(_, socket) do
-    socket
-  end
-
-  defp remove_player(socket) do
-    player_id = socket.assigns.player_id
-    case GameServer.remove_player(via(socket.topic), player_id) do
-      :ok ->
-        IO.inspect("Removed player")
-        broadcast_from(socket, "playerLeft", %{"playerId" => player_id})
-        socket
-      {:ok, :empty} ->
-        IO.inspect("Empty, closing game")
-        "game:" <> game_id = socket.topic
-        GameSupervisor.stop_game(game_id)
-        socket
-      _ ->
-        IO.inspect("Error")
-        socket
     end
   end
 
