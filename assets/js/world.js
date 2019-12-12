@@ -1,35 +1,43 @@
-import Phaser from '../vendor/phaser.min'
-
 import socket from './socket'
 
-let gameChannel = socket.channel("game:lobby");
-
-gameChannel.join()
-    .receive("ok", resp => {
-     })
-    .receive("error", resp => {
-     })
+import Phaser from '../vendor/phaser.min'
 
 class WorldScene extends Phaser.Scene {
   constructor() {
     super({
-      key: 'WorldScene'
+      key: 'WorldScene',
+      active: false
     });
   }
 
-  preload() {
+  init(data) {
+    this.gameChannel = data['gameChannel']
+  }
 
+  preload() {
+    this.load.image('tiles', 'map/spritesheet-extruded.png');
+    this.load.tilemapTiledJSON('map', 'map/map.json');
+    this.load.spritesheet('player', 'images/RPG_assets.png', {
+      frameWidth: 16,
+      frameHeight: 16
+    });
+    this.load.image('golem', 'images/coppergolem.png');
+    this.load.image('ent', 'images/dark-ent.png');
+    this.load.image('demon', 'images/demon.png');
+    this.load.image('worm', 'images/giant-worm.png');
+    this.load.image('wolf', 'images/wolf.png');
+    this.load.image('sword', 'images/attack-icon.png');
   }
 
   create() {
     this.createMap();
     this.createAnimations();
-    this.createPlayers();
     this.createEnemies();
+    this.createPlayers();
     this.createCursors();
     this.createSocketHandlers();
 
-    gameChannel.push('addPlayer', {
+    this.gameChannel.push('addPlayer', {
       'playerId': this.player.playerId,
       'x': this.player.x,
       'y': this.player.y
@@ -41,11 +49,11 @@ class WorldScene extends Phaser.Scene {
 
   createSocketHandlers() {
 
-    gameChannel.on("newPlayer", resp => {
+    this.gameChannel.on("newPlayer", resp => {
       this.createOtherPlayer(resp)
     });
 
-    gameChannel.on("currentPlayers", resp => {
+    this.gameChannel.on("currentPlayers", resp => {
       const self = this;
       let players = resp;
       Object.keys(players).forEach(function (id) {
@@ -53,32 +61,64 @@ class WorldScene extends Phaser.Scene {
       })
     });
 
-    gameChannel.on("playerMoved", playerInfo => {
+    this.gameChannel.on("playerMoved", playerInfo => {
       const self = this;
 
       this.otherPlayers.getChildren().forEach(player => {
         if (player.playerId == playerInfo.id) {
-          player.moveLeft = playerInfo.moveLeft;
-          player.moveRight = playerInfo.moveRight;
-          player.moveUp = playerInfo.moveUp;
-          player.moveDown = playerInfo.moveDown;
+          this.syncPlayerMovement(player, playerInfo);
         }
       });
     });
 
-    gameChannel.on("playerLeft", resp => {
+    this.gameChannel.on("playerLeft", resp => {
       this.removePlayer(resp["playerId"])
+    })
+
+    this.gameChannel.on("syncDown", playerInfo => {
+      const self = this;
+
+      this.otherPlayers.getChildren().forEach(player => {
+        if (player.playerId == playerInfo.id) {
+          this.syncPlayerMovement(player, playerInfo);
+          this.syncPlayerLocation(player, playerInfo);
+        }
+      });
     })
 
     this.timedEvent = this.time.addEvent({
       delay: 3000,
-      callback: this.syncPlayers,
+      callback: this.syncUp,
       callbackScope: this,
       loop: true
     });
   }
 
-  syncPlayers() {}
+  syncUp() {
+    this.gameChannel.push("syncUp", {
+      'playerId': this.player.playerId,
+      'x': this.player.x,
+      'y': this.player.y,
+      'moveLeft': this.player.moveLeft,
+      'moveRight': this.player.moveRight,
+      'moveUp': this.player.moveUp,
+      'moveDown': this.player.moveDown,
+    }).receive("ok", resp => {
+    }).receive("error", resp => {
+    })
+  }
+
+  syncPlayerMovement(player, playerInfo) {
+    player.moveLeft = playerInfo.moveLeft;
+    player.moveRight = playerInfo.moveRight;
+    player.moveUp = playerInfo.moveUp;
+    player.moveDown = playerInfo.moveDown;
+  }
+
+  syncPlayerLocation(player, playerInfo) {
+    player.x = playerInfo.x;
+    player.y = playerInfo.y;
+  }
 
   createMap() {
     // create the map
@@ -220,7 +260,7 @@ class WorldScene extends Phaser.Scene {
   }
 
   onMeetEnemy(player, enemy) {
-    // we move the zone to some other location
+    // TODO some actual gameplay
     if (this.player.isAttacking) {
       const location = this.getValidLocation();
       enemy.x = location.x;
@@ -261,38 +301,38 @@ class WorldScene extends Phaser.Scene {
 
     this.cursors.left.on('down', event => {
       this.player.moveLeft = true;
-      gameChannel.push("movePlayer", {"left": true});
+      this.gameChannel.push("movePlayer", {"moveLeft": true});
     });
     this.cursors.left.on('up', event => {
       this.player.moveLeft = false;
-      gameChannel.push("movePlayer", {"left": false});
+      this.gameChannel.push("movePlayer", {"moveLeft": false});
     });
 
     this.cursors.right.on('down', event => {
       this.player.moveRight = true;
-      gameChannel.push("movePlayer", {"right": true});
+      this.gameChannel.push("movePlayer", {"moveRight": true});
     });
     this.cursors.right.on('up', event => {
       this.player.moveRight = false;
-      gameChannel.push("movePlayer", {"right": false});
+      this.gameChannel.push("movePlayer", {"moveRight": false});
     });
 
     this.cursors.up.on('down', event => {
       this.player.moveUp = true;
-      gameChannel.push("movePlayer", {"up": true});
+      this.gameChannel.push("movePlayer", {"moveUp": true});
     });
     this.cursors.up.on('up', event => {
       this.player.moveUp = false;
-      gameChannel.push("movePlayer", {"up": false});
+      this.gameChannel.push("movePlayer", {"moveUp": false});
     });
 
     this.cursors.down.on('down', event => {
       this.player.moveDown = true;
-      gameChannel.push("movePlayer", {"down": true});
+      this.gameChannel.push("movePlayer", {"moveDown": true});
     });
     this.cursors.down.on('up', event => {
       this.player.moveDown = false;
-      gameChannel.push("movePlayer", {"down": false});
+      this.gameChannel.push("movePlayer", {"moveDown": false});
     });
 
     this.cursors.space.on('up', event => {
@@ -331,13 +371,14 @@ class WorldScene extends Phaser.Scene {
         default:
           enemy.body.setVelocityX(50);
       }
-  });
+      });
 
-  setTimeout(() => {
-    this.spawns.setVelocityX(0);
-    this.spawns.setVelocityY(0);
-  }, 500);
-}
+    setTimeout(() => {
+      this.spawns.setVelocityX(0);
+      this.spawns.setVelocityY(0);
+    }, 500);
+  }
+
 }
 
 export default WorldScene

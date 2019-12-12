@@ -1,7 +1,8 @@
 import Phaser from '../vendor/phaser.min'
 
-import BootScene from './boot'
+import TitleScene from './title'
 import WorldScene from './world'
+
 
 var config = {
   type: Phaser.AUTO,
@@ -20,8 +21,9 @@ var config = {
     }
   },
   scene: [
-    BootScene,
-    WorldScene
+    TitleScene,
+    WorldScene,
   ]
 };
 var game = new Phaser.Game(config);
+game.scene.start('TitleScene')

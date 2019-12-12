@@ -2,7 +2,7 @@ defmodule MmorpgWeb.UserSocket do
   use Phoenix.Socket
 
   ## Channels
-  channel "game:*", MmorpgWeb.GameChannel
+  channel "games:*", MmorpgWeb.GameChannel
 
   # Socket params are passed from the client and can
   # be used to verify and authenticate a user. After

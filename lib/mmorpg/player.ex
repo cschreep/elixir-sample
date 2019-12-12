@@ -4,7 +4,6 @@ defmodule Mmorpg.Player do
     :rotation,
     :x,
     :y,
-    :flip_x,
     :id,
     :move_left,
     :move_right,
@@ -14,13 +13,13 @@ defmodule Mmorpg.Player do
 
   alias __MODULE__
 
-  def new(player_name) do
+  def new(player_info) do
+    IO.inspect(player_info)
     %Player{
       rotation: 0,
-      x: :math.floor(:rand.uniform() * 400) + 50,
-      y: :math.floor(:rand.uniform() * 500) + 50,
-      flip_x: false,
-      id: player_name,
+      x: Map.get(player_info, "x", :math.floor(:rand.uniform() * 400) + 50),
+      y: Map.get(player_info, "y", :math.floor(:rand.uniform() * 500) + 50),
+      id: Map.get(player_info, "playerId"),
       move_left: false,
       move_right: false,
       move_up: false,
@@ -32,7 +31,6 @@ defmodule Mmorpg.Player do
     %{
       "x" => player.x,
       "y" => player.y,
-      "flipX" => player.flip_x,
       "rotation" => player.rotation,
       "id" => player.id,
       "moveLeft" => player.move_left,
