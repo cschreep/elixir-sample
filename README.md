@@ -1,6 +1,6 @@
 # Mmorpg
 
-To start your Phoenix server:
+To start the Phoenix server:
 
   * Install dependencies with `mix deps.get`
   * Install Node.js dependencies with `cd assets && npm install`
@@ -8,7 +8,7 @@ To start your Phoenix server:
 
 Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
 
-Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
+To see multiplayer in action, open an incognito browser and navigate to [`localhost:4000`](http://localhost:4000). Then you can join the existing game, and see both players moving independently of each other
 
 ## Learn more
 
